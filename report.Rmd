@@ -1,0 +1,37 @@
+---
+  title: "STA 325 Case Study"
+  author: "Jeff Du, Sahil Tilak"
+  header-includes: 
+    - \usepackage{float} #use the 'float' package
+    - \floatplacement{figure}{H} #make every figure with caption = h
+  output: pdf_document
+  fontsize: 10pt
+  figsintext : yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, echo=FALSE, warning = FALSE, message = FALSE}
+library(ggcorrplot)
+library(readr)
+library(dplyr)
+library(lubridate)
+library(huxtable)
+library(tidyr)
+library(lmtest)
+library(tidyverse)
+library(janitor)
+library(ggplot2)
+library(lme4)
+library(lmerTest)
+library(zoo)
+library(patchwork)
+library(broom)
+library(broom.mixed)
+library(lubridate)
+library(knitr)
+library(olsrr)
+library(car)
+```
