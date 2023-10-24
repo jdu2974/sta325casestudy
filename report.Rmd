@@ -41,17 +41,18 @@ train <- read.csv("data-train.csv")
 train$Re <- factor(train$Re)
 train$Fr <- factor(train$Fr)
 
-firstreg <- lm(R_moment_1 ~ St + I(St^2) + Re + Fr + St * Fr +  I(St^2) * Re + St * Re + Fr * Re, data = train)
+firstreg <- lm(log(R_moment_1) ~ log(St) + Re + Fr + St * Fr +  I(St^2) * Re + St * Re + Fr * Re, data = train)
 summary(firstreg)
 
-secondreg <- lm(R_moment_2 ~ St + I(St^2) + Re + Fr + St * Fr +  I(St^2) * Re + St * Re + Fr * Re, data = train)
+secondreg <- lm(log(R_moment_2) ~ log(St) + Re + Fr + log(St) * Fr +  I(St^2) * Re + St * Re + Fr * Re, data = train)
 summary(secondreg)
 
-thirdreg <- lm(R_moment_3 ~ St + I(St^2) + Re + Fr + St * Fr +  I(St^2) * Re + St * Re + Fr * Re, data = train)
+thirdreg <- lm(log(R_moment_3) ~ log(St)+ Re + Fr + log(St) * Fr +  I(St^2) * Re + St * Re + Fr * Re, data = train)
 summary(thirdreg)
 
-fourreg <- lm(R_moment_4 ~ St + I(St^2) + Re + Fr + St * Fr +  I(St^2) * Re + St * Re + Fr * Re, data = train)
+fourreg <- lm(log(R_moment_4) ~ log(St) + Re + Fr + log(St) * Fr +  I(St^2) * Re + St * Re + Fr * Re, data = train)
 summary(fourreg)
+
 
 ```
 
