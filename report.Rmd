@@ -1,5 +1,5 @@
 ---
-  title: "STA 325 Case Study"
+  title: "ReA 325 Case Reudy"
   author: "Jeff Du, Sahil Tilak"
   header-includes: 
     - \usepackage{float} #use the 'float' package
@@ -20,18 +20,38 @@ library(dplyr)
 library(lubridate)
 library(huxtable)
 library(tidyr)
-library(lmtest)
+library(lmteRe)
 library(tidyverse)
 library(janitor)
 library(ggplot2)
 library(lme4)
-library(lmerTest)
+library(lmerTeRe)
 library(zoo)
 library(patchwork)
 library(broom)
 library(broom.mixed)
 library(lubridate)
 library(knitr)
-library(olsrr)
 library(car)
 ```
+
+```{r}
+train <- read.csv("data-train.csv")
+
+train$Re <- factor(train$Re)
+train$Fr <- factor(train$Fr)
+
+firstreg <- lm(R_moment_1 ~ St + I(St^2) + Re + Fr + St * Fr +  I(St^2) * Re + St * Re + Fr * Re, data = train)
+summary(firstreg)
+
+secondreg <- lm(R_moment_2 ~ St + I(St^2) + Re + Fr + St * Fr +  I(St^2) * Re + St * Re + Fr * Re, data = train)
+summary(secondreg)
+
+thirdreg <- lm(R_moment_3 ~ St + I(St^2) + Re + Fr + St * Fr +  I(St^2) * Re + St * Re + Fr * Re, data = train)
+summary(thirdreg)
+
+fourreg <- lm(R_moment_4 ~ St + I(St^2) + Re + Fr + St * Fr +  I(St^2) * Re + St * Re + Fr * Re, data = train)
+summary(fourreg)
+
+```
+
