@@ -14,45 +14,70 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r libraries, echo=FALSE, warning = FALSE, message = FALSE}
-library(ggcorrplot)
-library(readr)
 library(dplyr)
-library(lubridate)
-library(huxtable)
-library(tidyr)
-library(lmteRe)
 library(tidyverse)
-library(janitor)
-library(ggplot2)
-library(lme4)
-library(lmerTeRe)
-library(zoo)
-library(patchwork)
-library(broom)
-library(broom.mixed)
-library(lubridate)
-library(knitr)
-library(car)
+library(MASS)
 ```
 
-```{r}
+
+# Methodology
+
+To examine the relationship between a particle's fluid turbulence, gravitational acceleration, and density on the four moments of the cluster
+probability distribution, we fit four nonlinear regression models with each
+moment as an individual response. We examined through our EDA that the 
+four moments are far from normally distributed, and so we considered
+a number of transformations on each moment, such as a Box-Cox transformation. Ultimately, we decided to log transform each moment
+to have a clear interpretation of our subsequent regression coefficients.
+We also log transformed each particle's Stokes number (St) as this predictor was far from normally distributed as well.
+
+Regarding our predictors, we first converted both the Reynolds number and the Froud number of each particle to a categorical predictor, because there only existed three unique values for each predictor in the dataset, and because the numerical differences between such values of Reynolds and Froud numbers was not easily interpretable. We posited from our background research that fitting three interaction, effects for each of the three predictors would better model the relationship
+between such predictors. For example, it is well established in existing
+research that fluid particle acceleration (Fr) is innately related to the turbulence of a flow (Re), in line with the Kolmogorov microscales.Therefore, we included all three potential interactions in our model (Stokes number interactions are log-transformed).
+
+In terms of increasing our model complexity, we considered using
+high order polynomials of log(St) for each of the four moments.
+We ran analysis of variance tests fitting different models of varying
+degrees of log(St) and found that the quartic fit appeared to be
+reasonable for all of the moments. 
+
+Therefore, our general model for each moment is as follows:
+
+Finally, we ran both stepwise forward and backward variable selections
+on each of our four models using AIC as our criteria. We personally
+care less about penalizing more complex models since we are given
+so few predictors to begin with anyways. Forward and backward selection
+did not remove or add any variables to the second, third, and fourth
+moment models, but did remove the interaction term between the Reynolds
+Number and the log of the Stokes number for the first moment model. However, we still decided to include this interaction because we believe
+it is scientifically grounded.
+
+```{r read_data, echo = FALSE}
 train <- read.csv("data-train.csv")
 
 train$Re <- factor(train$Re)
 train$Fr <- factor(train$Fr)
+```
 
-firstreg <- lm(log(R_moment_1) ~ log(St) + Re + Fr + St * Fr +  I(St^2) * Re + St * Re + Fr * Re, data = train)
-summary(firstreg)
+```{r models, echo = FALSE}
+firstreg <- lm(log(R_moment_1) ~ poly(log(St), 4) + Re + Fr + log(St) * Fr + log(St) * Re + Fr * Re, data = train)
 
-secondreg <- lm(log(R_moment_2) ~ log(St) + Re + Fr + log(St) * Fr +  I(St^2) * Re + St * Re + Fr * Re, data = train)
-summary(secondreg)
+secondreg <- lm(log(R_moment_2) ~ poly(log(St), 4) + Re + Fr + log(St) * Fr + log(St) * Re + Fr * Re, data = train)
 
-thirdreg <- lm(log(R_moment_3) ~ log(St)+ Re + Fr + log(St) * Fr +  I(St^2) * Re + St * Re + Fr * Re, data = train)
-summary(thirdreg)
+thirdreg <- lm(log(R_moment_3) ~ poly(log(St), 4) + Re + Fr + log(St) * Fr + log(St) * Re + Fr * Re, data = train)
 
-fourreg <- lm(log(R_moment_4) ~ log(St) + Re + Fr + log(St) * Fr +  I(St^2) * Re + St * Re + Fr * Re, data = train)
-summary(fourreg)
+fourreg <- lm(log(R_moment_4) ~ poly(log(St), 4) + Re + Fr + log(St) * Fr + log(St) * Re + Fr * Re, data = train)
+```
+
+```{r selection}
+step.model <- stepAIC(firstreg , direction = "both", 
+                      trace = FALSE)
+summary(step.model)
+```
 
 
+
+library(MASS)
+
+hist(train$St)
 ```
 
