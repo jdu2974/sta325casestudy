@@ -1,5 +1,5 @@
 ---
-  title: "StA 325 Case Study"
+  title: "STA 325 Case Study"
   author: "Jeff Du, Sahil Tilak"
   header-includes: 
     - \usepackage{float} #use the 'float' package
@@ -20,6 +20,7 @@ library(MASS)
 library(patchwork)
 library(latex2exp)
 library(knitr)
+library(kableExtra)
 ```
 
 ```{r read_data, echo = FALSE}
@@ -108,7 +109,7 @@ reasonable for all of the moments.
 Therefore, our general model for each moment is as follows:
 
 $$
-\begin{aligned} \quad Y &= \beta_0 + \beta_1log(Stokes) + \beta_2{log(Stokes)^2} + \beta_3{log(Stokes)^3} + \beta_4{log(Stokes)^4} + \beta_5Reynolds \\&\quad + \beta_6Froud + \beta_7(log(Stokes) * Froud) + \beta_8(log(Stokes) * Reynolds) + \beta_9(Froud * Reynolds) + \epsilon \\\text{Where:} \\Y & : \text{Moment} \\\beta_0 & : \text{Intercept} \\\beta_1 & : \text{Coefficient of log of Stokes Number} \\\beta_2 & : \text{Coefficient of log of Stokes Number squared} \\\beta_3 & : \text{Coefficient of log of Stokes Number cubed} \\\beta_4 & : \text{Coefficient of log of Stokes Number tesseracted} \\\beta_5 & : \text{Coefficient of Reynolds Number} \\\beta_6 & : \text{Coefficient of Froud Number} \\\beta_7 & : \text{Coefficient of Interaction Term of log Stokes Number and Froud Number } \\\beta_8 & : \text{Coefficient of Interaction Term of log Stokes Number and Reynolds Number} \\\beta_9 & : \text{Coefficient of Interaction Term of Froud Number and Reynolds Number} \\\epsilon & : \text{Random error}\end{aligned}
+\begin{aligned} \quad Y &= \beta_0 + \beta_1log(Stokes) + \beta_2{log(Stokes)^2} + \beta_3{log(Stokes)^3} + \beta_4{log(Stokes)^4} + \beta_5Reynolds \\&\quad + \beta_6Froud + \beta_7(log(Stokes) * Froud) + \beta_8(log(Stokes) * Reynolds) + \beta_9(Froud * Reynolds) + \epsilon \end{aligned}
 $$
 
 Finally, we ran both stepwise forward and backward variable selections
@@ -122,35 +123,52 @@ it is scientifically grounded.
 
 # Results
 
+```{r, echo=FALSE, results='asis'}
+cat("\\twocolumn")
+```
+
 Model 1:
 
-```{r models, echo = FALSE}
+```{r model_one, echo = FALSE, warning = FALSE, message = FALSE}
 firstreg <- lm(log(R_moment_1) ~ poly(log(St), 4) + Re + Fr + log(St) * Fr + log(St) * Re + Fr * Re, data = train)
 
-model_df <- as.data.frame(coef(summary(firstreg)))
-model_df <- model_df %>%
+model_one_df <- as.data.frame(coef(summary(firstreg)))
+model_one_df <- model_one_df %>%
   mutate_if(is.numeric, funs(as.character(signif(., 3))))
-model_df %>%
-  kable(digits = 3)
+model_one_df
+```
 
+Model 2:
 
+```{r model_two , echo = FALSE, warning = FALSE, message = FALSE}
 secondreg <- lm(log(R_moment_2) ~ poly(log(St), 4) + Re + Fr + log(St) * Fr + log(St) * Re + Fr * Re, data = train)
 
+model_two_df <- as.data.frame(coef(summary(secondreg)))
+model_two_df <- model_two_df %>%
+  mutate_if(is.numeric, funs(as.character(signif(., 3))))
+model_two_df
+```
+
+Model 3:
+
+```{r model_three, echo = FALSE, warning = FALSE, message = FALSE}
 thirdreg <- lm(log(R_moment_3) ~ poly(log(St), 4) + Re + Fr + log(St) * Fr + log(St) * Re + Fr * Re, data = train)
 
+model_three_df <- as.data.frame(coef(summary(thirdreg)))
+model_three_df <- model_three_df %>%
+  mutate_if(is.numeric, funs(as.character(signif(., 3))))
+model_three_df
+```
+
+Model 4:
+
+```{r model_four, echo = FALSE, warning = FALSE, message = FALSE}
 fourreg <- lm(log(R_moment_4) ~ poly(log(St), 4) + Re + Fr + log(St) * Fr + log(St) * Re + Fr * Re, data = train)
-```
 
-```{r selection}
-step.model <- stepAIC(firstreg , direction = "both", 
-                      trace = FALSE)
-summary(step.model)
-```
+model_four_df <- as.data.frame(coef(summary(fourreg)))
+model_four_df <- model_four_df %>%
+  mutate_if(is.numeric, funs(as.character(signif(., 3))))
+model_four_df
 
-
-
-library(MASS)
-
-hist(train$St)
 ```
 
