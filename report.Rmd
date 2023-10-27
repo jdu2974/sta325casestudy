@@ -129,46 +129,46 @@ cat("\\twocolumn")
 
 Model 1:
 
-```{r model_one, echo = FALSE, warning = FALSE, message = FALSE}
+```{r model_one, echo = FALSE, warning = FALSE, message = FALSE, fig.width = 7}
 firstreg <- lm(log(R_moment_1) ~ poly(log(St), 4) + Re + Fr + log(St) * Fr + log(St) * Re + Fr * Re, data = train)
 
 model_one_df <- as.data.frame(coef(summary(firstreg)))
 model_one_df <- model_one_df %>%
   mutate_if(is.numeric, funs(as.character(signif(., 3))))
-model_one_df
+kable(model_one_df, "latex")
 ```
 
 Model 2:
 
-```{r model_two , echo = FALSE, warning = FALSE, message = FALSE}
+```{r model_two , echo = FALSE, warning = FALSE, message = FALSE, fig.width = 7}
 secondreg <- lm(log(R_moment_2) ~ poly(log(St), 4) + Re + Fr + log(St) * Fr + log(St) * Re + Fr * Re, data = train)
 
 model_two_df <- as.data.frame(coef(summary(secondreg)))
 model_two_df <- model_two_df %>%
   mutate_if(is.numeric, funs(as.character(signif(., 3))))
-model_two_df
+kable(model_two_df, "latex")
 ```
 
 Model 3:
 
-```{r model_three, echo = FALSE, warning = FALSE, message = FALSE}
+```{r model_three, echo = FALSE, warning = FALSE, message = FALSE, fig.width = 7}
 thirdreg <- lm(log(R_moment_3) ~ poly(log(St), 4) + Re + Fr + log(St) * Fr + log(St) * Re + Fr * Re, data = train)
 
 model_three_df <- as.data.frame(coef(summary(thirdreg)))
 model_three_df <- model_three_df %>%
   mutate_if(is.numeric, funs(as.character(signif(., 3))))
-model_three_df
+kable(model_three_df, "latex")
 ```
 
 Model 4:
 
-```{r model_four, echo = FALSE, warning = FALSE, message = FALSE}
+```{r model_four, echo = FALSE, warning = FALSE, message = FALSE, fig.width = 7}
 fourreg <- lm(log(R_moment_4) ~ poly(log(St), 4) + Re + Fr + log(St) * Fr + log(St) * Re + Fr * Re, data = train)
 
 model_four_df <- as.data.frame(coef(summary(fourreg)))
 model_four_df <- model_four_df %>%
   mutate_if(is.numeric, funs(as.character(signif(., 3))))
-model_four_df
+kable(model_four_df, "latex")
 
 ```
 
