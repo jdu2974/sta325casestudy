@@ -38,7 +38,7 @@ test$Fr <- factor(test$Fr)
 
 # Introduction 
 
-Understanding fluid motion and turbulence is one of most challenging problems that physicists face. This case study will examine the relationship between three key properties of particles (Reynolds Number, Stokes Number, and Froud Number) and the probability distribution of particle cluster volumes. Through exploratory data analysis and nonlinear regression models, we are able to make predictions about the distribution of particle cluster volumes given parameter settings in terms of their four moments as well as better understand the way in which each parameter affects distribution. 
+Understanding fluid motion and turbulence is one of most challenging problems that physicists face. This case study will examine the relationship between three key properties of particles (Reynolds Number, Stokes Number, and Froude Number) and the probability distribution of particle cluster volumes. Through exploratory data analysis and nonlinear regression models, we are able to make predictions about the distribution of particle cluster volumes given parameter settings in terms of their four moments as well as better understand the way in which each parameter affects distribution. 
 
 The dataset consists of 7 columns and 89 rows. Each row contains data from a simulation with different particle parameters. There are three predictor variables, or parameters:
 
@@ -46,7 +46,7 @@ The dataset consists of 7 columns and 89 rows. Each row contains data from a sim
 
 **Stokes Number**: a measure of the particle size and density. Values lie on the interval $[0,3]$ in the dataset.
 
-**Froud Number**: a measure of the gravitational acceleration of the particle. There are three values in the dataset: $\infty$, 0.3, and 0.052 (baseline value in regression).
+**Froude Number**: a measure of the gravitational acceleration of the particle. There are three values in the dataset: $\infty$, 0.3, and 0.052 (baseline value in regression).
 
 There are four response variables, which are each of the four moments ($\mathbb{E}[x]$, $\mathbb{E}[x^2]$, $\mathbb{E}[x^3]$, $\mathbb{E}[x^4]$) of the probability distribution function of Voronoï volumes. We can examine the distributions through histograms.
 
@@ -75,7 +75,7 @@ p4 <- ggplot(aes(x = R_moment_4), data = train)+
 p1 + p2 + p3 + p4 + plot_layout(widths = c(1.1, 1.2)) + plot_annotation(title = 'Distribution of the Four Moments', theme = theme(plot.title = element_text(hjust = 0.5, size = 30)))
 ```
 
-We can see that all four moments are right skewed and not normally distributed. We also wanted to examine the relationship between the predictors to determine if there is value in including interaction effects. To do so, we create boxplots to illustrate the relationship between the continuous and categorical variables (i.e. the relationship between Stokes Number and Reynolds/Froud Number).
+We can see that all four moments are right skewed and not normally distributed. We also wanted to examine the relationship between the predictors to determine if there is value in including interaction effects. To do so, we create boxplots to illustrate the relationship between the continuous and categorical variables (i.e. the relationship between Stokes Number and Reynolds/Froude Number).
 
 ```{r echo = FALSE, warning = FALSE, message = FALSE, fig.height = 7.5, fig.width = 16}
 #predictor EDA
@@ -88,13 +88,13 @@ p1 <- ggplot(mapping = aes(x = as.factor(Re), y = log(St)), data = train) +
 p2 <- ggplot(mapping = aes(x = as.factor(Fr), y = log(St)), data = train) +
   geom_boxplot() +
   theme_bw(base_size = 16) +
-  labs(x = 'Froud Number', y = 'Log(Stokes)')
+  labs(x = 'Froude Number', y = 'Log(Stokes)')
 
 p3 <- ggplot(mapping = aes(x = as.factor(Re)), data = train) +
   geom_bar(aes(fill = as.factor(Fr))) +
   theme_bw(base_size = 16) +
   theme(legend.position="bottom") +
-  labs(x = 'Reynolds Number', y = "Count", fill = 'Froud Number')
+  labs(x = 'Reynolds Number', y = "Count", fill = 'Froude Number')
 
 (p1 + p2) / p3 + plot_annotation(title = "Relationship between Predictor Variables", theme = theme(plot.title = element_text(hjust = 0.5, size = 30)))
 
@@ -102,8 +102,8 @@ p3 <- ggplot(mapping = aes(x = as.factor(Re)), data = train) +
 
 We notice potential relationships between all three combinations of predictor variables, with particular
 emphasis on the differences in range of log Stokes
-values based on different Reynolds and Froud numbers. We also notice
-that there are no particles with a Froud number of 0.3 and a Reynolds number of 398.
+values based on different Reynolds and Froude numbers. We also notice
+that there are no particles with a Froude number of 0.3 and a Reynolds number of 398.
 
 # Methodology
 
@@ -112,13 +112,13 @@ a number of transformations on each moment, such as a Box-Cox transformation, bu
 to have a clear interpretation of our subsequent regression coefficients.
 We also log transformed each particle's Stokes number as this predictor was far from normally distributed as well.
 
-Regarding our predictors, we first converted both the Reynolds number and the Froud number of each particle to categorical predictors because there only existed three unique values for each parameter in the dataset and because the numerical differences between such values of Reynolds and Froud numbers were not easily interpretable. We posited from our background research that fitting three interaction, effects for all three predictors would better model the relationship between such predictors. For example, it is well established in existing
+Regarding our predictors, we first converted both the Reynolds number and the Froude number of each particle to categorical predictors because there only existed three unique values for each parameter in the dataset and because the numerical differences between such values of Reynolds and Froude numbers were not easily interpretable. We posited from our background research that fitting three interaction, effects for all three predictors would better model the relationship between such predictors. For example, it is well established in existing
 research that fluid particle acceleration (Fr) is innately related to the turbulence of a flow (Re), in line with the Kolmogorov microscales. Therefore, we included all three potential interactions in our model (Stokes number interactions are log-transformed).
 
 We also considered adding high order polynomials of the log of the Stokes number. We ran analysis of variance tests fitting models of varying degrees of log of the Stokes number and found that the quartic fit appeared to be reasonable for all moments. Therefore, our general model for each moment is as follows:
 
 $$
-\begin{aligned} \quad Y &= \beta_0 + \beta_1log(Stokes) + \beta_2{log(Stokes)^2} + \beta_3{log(Stokes)^3} + \beta_4{log(Stokes)^4} + \beta_5Reynolds \\&\quad + \beta_6Froud + \beta_7(log(Stokes) * Froud) + \beta_8(log(Stokes) * Reynolds) + \beta_9(Froud * Reynolds)\end{aligned}
+\begin{aligned} \quad Y &= \beta_0 + \beta_1log(Stokes) + \beta_2{log(Stokes)^2} + \beta_3{log(Stokes)^3} + \beta_4{log(Stokes)^4} + \beta_5Reynolds \\&\quad + \beta_6Froude + \beta_7(log(Stokes) * Froude) + \beta_8(log(Stokes) * Reynolds) + \beta_9(Froude * Reynolds)\end{aligned}
 $$
 
 Finally, we ran both stepwise forward and backward variable selections
@@ -191,11 +191,16 @@ kbl(model_four_df, caption = 'Model 4') %>% kable_styling(latex_options = "HOLD_
 \end{multicols}
 
 The adjusted R-Squared values for each model were .9991, .9814, .9765, and .9757 respectively, indicating that essentially all of the variation in the
-log of the four moments can be explained by the combination of the predictor variables that we chose. Using an alpha of .05 as a threshold for statistical
-significance, we find that every individual predictor is statistically
-significant in each of the four models, though both the sign and magnitude
-of the coefficients vary by moment. We also notice that most of the interaction terms are also statistically significant, with the two
-clear exceptions being the interaction between a Froud number of 0.3 and the log of the Stokes number and the interaction between a Reynolds number of 224 and the log of the Stokes number.
+log of the four moments can be explained by the combination of the predictor variables that we chose. Using an alpha of .05 as a threshold for statistical significance, we find that every individual predictor is statistically significant in each of the four models, though both the sign and magnitude of the coefficients vary by moment. We also notice that most of the interaction terms are also statistically significant, with the two
+clear exceptions being the interaction between a Froude number of 0.3 and the log of the Stokes number and the interaction between a Reynolds number of 224 and the log of the Stokes number.
+
+Let's first interpret terms involving the Stokes number. Recall that a higher Stokes number represents a larger and denser particle. We modeled a non-linear relationship between the log of the Stokes number and the moments, and so an interpretation of, say, a .1 unit increase in the Stokes
+number would not be so clear. However, we do notice that for the second, third, and fourth moment model, the degree one and three coefficients
+are positive, while the degree two and four coefficients are negative. 
+
+We can also examine the interactions between Stokes numbers and Froude + Reynolds numbers. We see that the interaction coefficient between log(Stokes) and a Froude value of 0.3 is positive for all four models, but that the coefficient between log(Stokes) and a Froude value of infinity is negative for the second, third, and fourth models (recall that the baseline value of Froude is 0.052). Recall that high Froude numbers indicate that gravity can essentially be neglected. For particles that have such a high Froude value that they are essentially in free fall, our model predicts that as they become larger and denser, holding turbulence constant (Reynolds), that their second, third, and fourth moments of the distribution will be smaller.
+ 
+Let's first interpret terms involving the Froude number. Recall that high Froude values indicate that the interial forces dominate the gravitational forces. With 0.052 as our baseline Froude number, we examine the coefficients of the Froude indicator variables and find that the coefficients for a Froude number of 0.3 and a Froude number of infinity are essentially the same in all four moments models. This coefficient is negative, indicating that higher values of Froude numbers, holding a particle's Reynolds number and Stokes number constant, lead to a lower mean, variance, skew, and kurtosis of the distribution of particle cluster volumes. However, for the second, third, and fourth moment model, we find that the interaction coefficient between a Froude value of 0.3 and log(Stokes) is positive, but is negative for the interaction between a Froude value of infinity and log(Stokes). Recall that 
 
 ```{r test-values, echo = FALSE, warning = FALSE, message = FALSE}
 predictionone <- exp(predict(firstreg, newdata = test))
