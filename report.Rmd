@@ -27,9 +27,13 @@ library(broom)
 
 ```{r read_data, echo = FALSE}
 train <- read.csv("data-train.csv")
+test <- read.csv("data-test.csv")
 
 train$Re <- factor(train$Re)
 train$Fr <- factor(train$Fr)
+
+test$Re <- factor(test$Re)
+test$Fr <- factor(test$Fr)
 ```
 
 # Introduction 
@@ -46,56 +50,60 @@ The dataset consists of 7 columns and 89 rows. Each row contains data from a sim
 
 There are four response variables, which are each of the four moments ($\mathbb{E}[x]$, $\mathbb{E}[x^2]$, $\mathbb{E}[x^3]$, $\mathbb{E}[x^4]$) of the probability distribution function of Voronoï volumes. We can examine the distributions through histograms.
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 7, fig.width = 16}
+```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 7.5, fig.width = 16}
 #Response EDA
 p1 <- ggplot(aes(x = R_moment_1), data = train)+
   geom_histogram() +
-  theme_bw() + 
+  theme_bw(base_size = 22) + 
   labs(x = "E[x]", y = "")
 
 p2 <- ggplot(aes(x = R_moment_2), data = train)+
   geom_histogram() +
-  theme_bw() +
+  theme_bw(base_size = 22) +
   labs(x = TeX("$E[x^{2}]$"), y = "")
 
 p3 <- ggplot(aes(x = R_moment_3), data = train)+
   geom_histogram() +
-  theme_bw() +
+  theme_bw(base_size = 22) +
   labs(x = TeX("$E[x^{3}]$"), y = "")
 
 p4 <- ggplot(aes(x = R_moment_4), data = train)+
   geom_histogram() +
-  theme_bw() + 
+  theme_bw(base_size = 22) + 
   labs(x = TeX("$E[x^{4}]$"), y = "")
 
-p1 + p2 + p3 + p4 + plot_layout(widths = c(1.1, 1.2)) + plot_annotation(title = 'Distribution of the Four Moments', theme = theme(plot.title = element_text(hjust = 0.5)))
+p1 + p2 + p3 + p4 + plot_layout(widths = c(1.1, 1.2)) + plot_annotation(title = 'Distribution of the Four Moments', theme = theme(plot.title = element_text(hjust = 0.5, size = 30)))
 ```
 
-We can see that all four moments are right skewed and not normally distributed. We also wanted to examine the relationship between the predictors to determine if there is value in including interaction effects. To do so, we plot boxplots to measure the relationship between the continuous and categorical variables (i.e. the relationship between Stokes Number and Reynolds/Froud Number.
+We can see that all four moments are right skewed and not normally distributed. We also wanted to examine the relationship between the predictors to determine if there is value in including interaction effects. To do so, we create boxplots to illustrate the relationship between the continuous and categorical variables (i.e. the relationship between Stokes Number and Reynolds/Froud Number).
 
-```{r echo = FALSE, warning = FALSE, message = FALSE, fig.height = 6.5, fig.width = 16}
+```{r echo = FALSE, warning = FALSE, message = FALSE, fig.height = 7.5, fig.width = 16}
 #predictor EDA
 
 p1 <- ggplot(mapping = aes(x = as.factor(Re), y = log(St)), data = train) +
   geom_boxplot() +
-  theme_bw() +
-  labs(x = 'Reynolds Number', y = 'Log of Stokes Number')
+  theme_bw(base_size = 16) +
+  labs(x = 'Reynolds Number', y = 'Log(Stokes)')
 
 p2 <- ggplot(mapping = aes(x = as.factor(Fr), y = log(St)), data = train) +
   geom_boxplot() +
-  theme_bw() +
-  labs(x = 'Froud Number', y = 'Log of Stokes Number')
+  theme_bw(base_size = 16) +
+  labs(x = 'Froud Number', y = 'Log(Stokes)')
 
 p3 <- ggplot(mapping = aes(x = as.factor(Re)), data = train) +
   geom_bar(aes(fill = as.factor(Fr))) +
-  theme_bw() +
-  labs(x = 'Reynolds Number', fill = 'Froud Number')
+  theme_bw(base_size = 16) +
+  theme(legend.position="bottom") +
+  labs(x = 'Reynolds Number', y = "Count", fill = 'Froud Number')
 
-(p1 + p2) / p3 + plot_annotation(title = "Relationship between Predictor Variables", theme = theme(plot.title = element_text(hjust = 0.5)))
+(p1 + p2) / p3 + plot_annotation(title = "Relationship between Predictor Variables", theme = theme(plot.title = element_text(hjust = 0.5, size = 30)))
 
 ```
 
-We notice potential relationships between all three combinations of predictor variables.
+We notice potential relationships between all three combinations of predictor variables, with particular
+emphasis on the differences in range of log Stokes
+values based on different Reynolds and Froud numbers. We also notice
+that there are no particles with a Froud number of 0.3 and a Reynolds number of 398.
 
 # Methodology
 
@@ -104,8 +112,8 @@ a number of transformations on each moment, such as a Box-Cox transformation, bu
 to have a clear interpretation of our subsequent regression coefficients.
 We also log transformed each particle's Stokes number as this predictor was far from normally distributed as well.
 
-Regarding our predictors, we first converted both the Reynolds number and the Froud number of each particle to categorical predictors, because there only existed three unique values for each parameter, and because the numerical differences between such values of Reynolds and Froud numbers was not easily interpretable. We posited from our background research that fitting three interaction, effects for all three predictors would better model the relationship between such predictors. For example, it is well established in existing
-research that fluid particle acceleration (Fr) is innately related to the turbulence of a flow (Re), in line with the Kolmogorov microscales.Therefore, we included all three potential interactions in our model (Stokes number interactions are log-transformed).
+Regarding our predictors, we first converted both the Reynolds number and the Froud number of each particle to categorical predictors because there only existed three unique values for each parameter in the dataset and because the numerical differences between such values of Reynolds and Froud numbers were not easily interpretable. We posited from our background research that fitting three interaction, effects for all three predictors would better model the relationship between such predictors. For example, it is well established in existing
+research that fluid particle acceleration (Fr) is innately related to the turbulence of a flow (Re), in line with the Kolmogorov microscales. Therefore, we included all three potential interactions in our model (Stokes number interactions are log-transformed).
 
 We also considered adding high order polynomials of the log of the Stokes number. We ran analysis of variance tests fitting models of varying degrees of log of the Stokes number and found that the quartic fit appeared to be reasonable for all moments. Therefore, our general model for each moment is as follows:
 
@@ -183,8 +191,21 @@ kbl(model_four_df, caption = 'Model 4') %>% kable_styling(latex_options = "HOLD_
 \end{multicols}
 
 The adjusted R-Squared values for each model were .9991, .9814, .9765, and .9757 respectively, indicating that essentially all of the variation in the
-four moments can be explained by the combination of the predictor variables
-that we chose. Using an alpha of .05 as a threshold for statistical
+log of the four moments can be explained by the combination of the predictor variables that we chose. Using an alpha of .05 as a threshold for statistical
 significance, we find that every individual predictor is statistically
 significant in each of the four models, though both the sign and magnitude
-of the coefficients vary by moment.
+of the coefficients vary by moment. We also notice that most of the interaction terms are also statistically significant, with the two
+clear exceptions being the interaction between a Froud number of 0.3 and the log of the Stokes number and the interaction between a Reynolds number of 224 and the log of the Stokes number.
+
+```{r test-values, echo = FALSE, warning = FALSE, message = FALSE}
+predictionone <- exp(predict(firstreg, newdata = test))
+predictiontwo <- exp(predict(secondreg, newdata = test))
+predictionthree <- exp(predict(thirdreg, newdata = test))
+predictionfour <- exp(predict(fourreg, newdata = test))
+
+test_predictions = as.data.frame(cbind(test, predictionone, predictiontwo, predictionthree, predictionfour))
+
+write.csv(test_predictions, "Test Predictions")
+```
+
+
