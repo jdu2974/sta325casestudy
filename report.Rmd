@@ -2,8 +2,8 @@
   title: "STA 325 Case Study"
   author: "Jeff Du, Sahil Tilak"
   header-includes: 
-    - \usepackage{float} #use the 'float' package
-    - \floatplacement{figure}{H} #make every figure with caption = h
+    - \usepackage{multicol}
+    - \setlength{\columnsep}{20mm}
   output: pdf_document
   fontsize: 10pt
   figsintext : yes
@@ -21,6 +21,8 @@ library(patchwork)
 library(latex2exp)
 library(knitr)
 library(kableExtra)
+library(tidyr)
+library(broom)
 ```
 
 ```{r read_data, echo = FALSE}
@@ -32,25 +34,19 @@ train$Fr <- factor(train$Fr)
 
 # Introduction 
 
-Understanding is one of most challenging problems that physicists face today. This case study will attempt to understand how the relationship between three key properties of particles (Reynolds Number, Stokes Number, and Froud Number) and the probability distribution of particle cluster volumes. 
+Understanding fluid motion and turbulence is one of most challenging problems that physicists face. This case study will examine the relationship between three key properties of particles (Reynolds Number, Stokes Number, and Froud Number) and the probability distribution of particle cluster volumes. Through exploratory data analysis and nonlinear regression models, we are able to make predictions about the distribution of particle cluster volumes given parameter settings in terms of their four moments as well as better understand the way in which each parameter affects distribution. 
 
-Through exploratory data analysis and nonlinear regression models, we are able to make predictions about the distribution of particle cluster volumes given parameter settings, as well as understand the way in which each parameter affects the distribution. 
+The dataset consists of 7 columns and 89 rows. Each row contains data from a simulation with different particle parameters. There are three predictor variables, or parameters:
 
-The dataset consists of 7 columns and 89 rows. Each row contains data from a simulation with different 
-There are three predictor variables, or parameters:
-*Re*: Reynolds Number, which measures the intensity of fluid turbulence of the particle. There are three values of Reynolds Number in the dataset: 90, 224, and 338
-*St*: Stokes Number, which measures the size and density of the particle. Stokes Number lies on the interval $[0,3]$ in the dataset
-*Fr*: Froud Number, which measures the gravitational acceleration of the particle. There are three values in the dataset: $\infty$, 0.3, and 0.052
+**Reynolds Number**: a measure of the intensity of fluid turbulence of the particle. There are three values of Reynolds Number in the dataset: 90 (baseline value in regression), 224, and 338.
 
-There are four predictor variables, which are each of the four moments ($\mathbb{E}[x]$, $\mathbb{E}[x^2]$, $\mathbb{E}[x^3]$, $\mathbb{E}[x^4]$) of the probability distribution function of Voronoï volumes, which serve as a measure of the clustering of particles
+**Stokes Number**: a measure of the particle size and density. Values lie on the interval $[0,3]$ in the dataset.
 
+**Froud Number**: a measure of the gravitational acceleration of the particle. There are three values in the dataset: $\infty$, 0.3, and 0.052 (baseline value in regression).
 
+There are four response variables, which are each of the four moments ($\mathbb{E}[x]$, $\mathbb{E}[x^2]$, $\mathbb{E}[x^3]$, $\mathbb{E}[x^4]$) of the probability distribution function of Voronoï volumes. We can examine the distributions through histograms.
 
-## EDA
-
-First, we chose to look at the distribution of the four response variables
-
-```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 6, fig.width = 16}
+```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 7, fig.width = 16}
 #Response EDA
 p1 <- ggplot(aes(x = R_moment_1), data = train)+
   geom_histogram() +
@@ -72,59 +68,49 @@ p4 <- ggplot(aes(x = R_moment_4), data = train)+
   theme_bw() + 
   labs(x = TeX("$E[x^{4}]$"), y = "")
 
-
 p1 + p2 + p3 + p4 + plot_layout(widths = c(1.1, 1.2)) + plot_annotation(title = 'Distribution of the Four Moments', theme = theme(plot.title = element_text(hjust = 0.5)))
 ```
 
-We can see from an histogram of the response variables that all four moments are right skewed and not normally distributed. To account for this, we chose to log-transform the response variables to ensure they are normally distributed.
+We can see that all four moments are right skewed and not normally distributed. We also wanted to examine the relationship between the predictors to determine if there is value in including interaction effects. To do so, we plot boxplots to measure the relationship between the continuous and categorical variables (i.e. the relationship between Stokes Number and Reynolds/Froud Number.
 
-We also wanted to examine the relationship between the predictors to determine if there is value in including interaction effects. To do so, we plot boxplots to measure the relationship between a continuous and categorical variable (i.e. the relationship between Stokes Number and Reynolds/Froud Number) and a barplot to show the interaction between Reynold's Number and Froud Number
-
-```{r echo = FALSE, warning = FALSE, message = FALSE, fig.height = 6, fig.width = 16}
+```{r echo = FALSE, warning = FALSE, message = FALSE, fig.height = 6.5, fig.width = 16}
 #predictor EDA
 
 p1 <- ggplot(mapping = aes(x = as.factor(Re), y = log(St)), data = train) +
   geom_boxplot() +
+  theme_bw() +
   labs(x = 'Reynolds Number', y = 'Log of Stokes Number')
 
 p2 <- ggplot(mapping = aes(x = as.factor(Fr), y = log(St)), data = train) +
   geom_boxplot() +
+  theme_bw() +
   labs(x = 'Froud Number', y = 'Log of Stokes Number')
 
 p3 <- ggplot(mapping = aes(x = as.factor(Re)), data = train) +
   geom_bar(aes(fill = as.factor(Fr))) +
+  theme_bw() +
   labs(x = 'Reynolds Number', fill = 'Froud Number')
 
-(p1 + p2) + plot_annotation(title = "Relationship between Predictor Variables", theme = theme(plot.title = element_text(hjust = 0.5)))
+(p1 + p2) / p3 + plot_annotation(title = "Relationship between Predictor Variables", theme = theme(plot.title = element_text(hjust = 0.5)))
 
 ```
 
-We notice that there are may be relationships all three combinations of predictor variables, so we will include the interaction effects in our intial model. 
+We notice potential relationships between all three combinations of predictor variables.
 
 # Methodology
 
-To examine the relationship between a particle's fluid turbulence, gravitational acceleration, and density on the four moments of the cluster
-probability distribution, we fit four nonlinear regression models with each
-moment as an individual response. We examined through our EDA that the 
-four moments are far from normally distributed, and so we considered
-a number of transformations on each moment, such as a Box-Cox transformation. Ultimately, we decided to log transform each moment
+To examine the relationship between a particle's fluid turbulence, gravitational acceleration, and density on the four moments, we fit four nonlinear regression models with each moment as the response. We considered
+a number of transformations on each moment, such as a Box-Cox transformation, but ultimately decided to log transform each moment
 to have a clear interpretation of our subsequent regression coefficients.
-We also log transformed each particle's Stokes number (St) as this predictor was far from normally distributed as well.
+We also log transformed each particle's Stokes number as this predictor was far from normally distributed as well.
 
-Regarding our predictors, we first converted both the Reynolds number and the Froud number of each particle to a categorical predictor, because there only existed three unique values for each predictor in the dataset, and because the numerical differences between such values of Reynolds and Froud numbers was not easily interpretable. We posited from our background research that fitting three interaction, effects for each of the three predictors would better model the relationship
-between such predictors. For example, it is well established in existing
+Regarding our predictors, we first converted both the Reynolds number and the Froud number of each particle to categorical predictors, because there only existed three unique values for each parameter, and because the numerical differences between such values of Reynolds and Froud numbers was not easily interpretable. We posited from our background research that fitting three interaction, effects for all three predictors would better model the relationship between such predictors. For example, it is well established in existing
 research that fluid particle acceleration (Fr) is innately related to the turbulence of a flow (Re), in line with the Kolmogorov microscales.Therefore, we included all three potential interactions in our model (Stokes number interactions are log-transformed).
 
-In terms of increasing our model complexity, we considered using
-high order polynomials of log(St) for each of the four moments.
-We ran analysis of variance tests fitting different models of varying
-degrees of log(St) and found that the quartic fit appeared to be
-reasonable for all of the moments. 
-
-Therefore, our general model for each moment is as follows:
+We also considered adding high order polynomials of the log of the Stokes number. We ran analysis of variance tests fitting models of varying degrees of log of the Stokes number and found that the quartic fit appeared to be reasonable for all moments. Therefore, our general model for each moment is as follows:
 
 $$
-\begin{aligned} \quad Y &= \beta_0 + \beta_1log(Stokes) + \beta_2{log(Stokes)^2} + \beta_3{log(Stokes)^3} + \beta_4{log(Stokes)^4} + \beta_5Reynolds \\&\quad + \beta_6Froud + \beta_7(log(Stokes) * Froud) + \beta_8(log(Stokes) * Reynolds) + \beta_9(Froud * Reynolds) + \epsilon \end{aligned}
+\begin{aligned} \quad Y &= \beta_0 + \beta_1log(Stokes) + \beta_2{log(Stokes)^2} + \beta_3{log(Stokes)^3} + \beta_4{log(Stokes)^4} + \beta_5Reynolds \\&\quad + \beta_6Froud + \beta_7(log(Stokes) * Froud) + \beta_8(log(Stokes) * Reynolds) + \beta_9(Froud * Reynolds)\end{aligned}
 $$
 
 Finally, we ran both stepwise forward and backward variable selections
@@ -133,57 +119,72 @@ care less about penalizing more complex models since we are given
 so few predictors to begin with anyways. Forward and backward selection
 did not remove or add any variables to the second, third, and fourth
 moment models, but did remove the interaction term between the Reynolds
-Number and the log of the Stokes number for the first moment model. However, we still decided to include this interaction because we believe
+number and the log of the Stokes number for the first moment model. However, we still decided to include this interaction because we believe
 it is scientifically grounded.
 
 # Results
 
-```{r, echo=FALSE, results='asis'}
-cat("\\twocolumn")
-```
+Here we display the results for our four regression models.
 
-Model 1:
+\begin{multicols}{2}%
 
-```{r model_one, echo = FALSE, warning = FALSE, message = FALSE, fig.width = 7}
+
+```{r model_one, echo = FALSE, warning = FALSE, message = FALSE, fig.width = 5}
 firstreg <- lm(log(R_moment_1) ~ poly(log(St), 4) + Re + Fr + log(St) * Fr + log(St) * Re + Fr * Re, data = train)
 
 model_one_df <- as.data.frame(coef(summary(firstreg)))
 model_one_df <- model_one_df %>%
   mutate_if(is.numeric, funs(as.character(signif(., 3))))
-kable(model_one_df, "latex")
+model_one_df <- model_one_df[, -3]
+rownames(model_one_df) <- c("Intercept", "Log(St)", "Log(St)^2", "Log(St)^3", "Log(St)^4", "Re 224", "Re 398", "Fr 0.3", "Fr Inf", "Fr 0.3 * Log(St)", "Fr Inf * Log(St)", "Re 224 * Log(St)", "Re 398 * Log(St)", "Re 224 * Fr 0.3", "Re 244 * Fr Inf", "Re 398 * Fr Inf")
+
+kbl(model_one_df, caption = 'Model 1') %>% kable_styling(latex_options = "HOLD_position", full_width = F)
 ```
 
-Model 2:
-
-```{r model_two , echo = FALSE, warning = FALSE, message = FALSE, fig.width = 7}
+```{r model_two , echo = FALSE, warning = FALSE, message = FALSE, fig.width = 5}
 secondreg <- lm(log(R_moment_2) ~ poly(log(St), 4) + Re + Fr + log(St) * Fr + log(St) * Re + Fr * Re, data = train)
 
 model_two_df <- as.data.frame(coef(summary(secondreg)))
 model_two_df <- model_two_df %>%
   mutate_if(is.numeric, funs(as.character(signif(., 3))))
-kable(model_two_df, "latex")
+model_two_df <- model_two_df[, -3]
+rownames(model_two_df) <- c("Intercept", "Log(St)", "Log(St)^2", "Log(St)^3", "Log(St)^4", "Re 224", "Re 398", "Fr 0.3", "Fr Inf", "Fr 0.3 * Log(St)", "Fr Inf * Log(St)", "Re 224 * Log(St)", "Re 398 * Log(St)", "Re 224 * Fr 0.3", "Re 244 * Fr Inf", "Re 398 * Fr Inf")
+
+
+kbl(model_two_df, caption = 'Model 2') %>% kable_styling(latex_options = "HOLD_position", full_width = F)
 ```
 
-Model 3:
 
-```{r model_three, echo = FALSE, warning = FALSE, message = FALSE, fig.width = 7}
+```{r model_three, echo = FALSE, warning = FALSE, message = FALSE, fig.width = 5}
 thirdreg <- lm(log(R_moment_3) ~ poly(log(St), 4) + Re + Fr + log(St) * Fr + log(St) * Re + Fr * Re, data = train)
 
 model_three_df <- as.data.frame(coef(summary(thirdreg)))
 model_three_df <- model_three_df %>%
   mutate_if(is.numeric, funs(as.character(signif(., 3))))
-kable(model_three_df, "latex")
+model_three_df <- model_three_df[, -3]
+rownames(model_three_df) <- c("Intercept", "Log(St)", "Log(St)^2", "Log(St)^3", "Log(St)^4", "Re 224", "Re 398", "Fr 0.3", "Fr Inf", "Fr 0.3 * Log(St)", "Fr Inf * Log(St)", "Re 224 * Log(St)", "Re 398 * Log(St)", "Re 224 * Fr 0.3", "Re 244 * Fr Inf", "Re 398 * Fr Inf")
+
+kbl(model_three_df, caption = 'Model 3') %>% kable_styling(latex_options = "HOLD_position", full_width = F)
 ```
 
-Model 4:
-
-```{r model_four, echo = FALSE, warning = FALSE, message = FALSE, fig.width = 7}
+```{r model_four, echo = FALSE, warning = FALSE, message = FALSE, fig.width = 5}
 fourreg <- lm(log(R_moment_4) ~ poly(log(St), 4) + Re + Fr + log(St) * Fr + log(St) * Re + Fr * Re, data = train)
 
 model_four_df <- as.data.frame(coef(summary(fourreg)))
 model_four_df <- model_four_df %>%
   mutate_if(is.numeric, funs(as.character(signif(., 3))))
-kable(model_four_df, "latex")
+model_four_df <- model_four_df[, -3]
+rownames(model_four_df) <- c("Intercept", "Log(St)", "Log(St)^2", "Log(St)^3", "Log(St)^4", "Re 224", "Re 398", "Fr 0.3", "Fr Inf", "Fr 0.3 * Log(St)", "Fr Inf * Log(St)", "Re 224 * Log(St)", "Re 398 * Log(St)", "Re 224 * Fr 0.3", "Re 244 * Fr Inf", "Re 398 * Fr Inf")
+
+kbl(model_four_df, caption = 'Model 4') %>% kable_styling(latex_options = "HOLD_position", full_width = F)
 
 ```
 
+\end{multicols}
+
+The adjusted R-Squared values for each model were .9991, .9814, .9765, and .9757 respectively, indicating that essentially all of the variation in the
+four moments can be explained by the combination of the predictor variables
+that we chose. Using an alpha of .05 as a threshold for statistical
+significance, we find that every individual predictor is statistically
+significant in each of the four models, though both the sign and magnitude
+of the coefficients vary by moment.
