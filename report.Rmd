@@ -32,7 +32,23 @@ train$Fr <- factor(train$Fr)
 
 # Introduction 
 
+Understanding is one of most challenging problems that physicists face today. This case study will attempt to understand how the relationship between three key properties of particles (Reynolds Number, Stokes Number, and Froud Number) and the probability distribution of particle cluster volumes. 
+
+Through exploratory data analysis and nonlinear regression models, we are able to make predictions about the distribution of particle cluster volumes given parameter settings, as well as understand the way in which each parameter affects the distribution. 
+
+The dataset consists of 7 columns and 89 rows. Each row contains data from a simulation with different 
+There are three predictor variables, or parameters:
+*Re*: Reynolds Number, which measures the intensity of fluid turbulence of the particle. There are three values of Reynolds Number in the dataset: 90, 224, and 338
+*St*: Stokes Number, which measures the size and density of the particle. Stokes Number lies on the interval $[0,3]$ in the dataset
+*Fr*: Froud Number, which measures the gravitational acceleration of the particle. There are three values in the dataset: $\infty$, 0.3, and 0.052
+
+There are four predictor variables, which are each of the four moments ($\mathbb{E}[x]$, $\mathbb{E}[x^2]$, $\mathbb{E}[x^3]$, $\mathbb{E}[x^4]$) of the probability distribution function of Voronoï volumes, which serve as a measure of the clustering of particles
+
+
+
 ## EDA
+
+First, we chose to look at the distribution of the four response variables
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 6, fig.width = 16}
 #Response EDA
@@ -62,8 +78,7 @@ p1 + p2 + p3 + p4 + plot_layout(widths = c(1.1, 1.2)) + plot_annotation(title = 
 
 We can see from an histogram of the response variables that all four moments are right skewed and not normally distributed. To account for this, we chose to log-transform the response variables to ensure they are normally distributed.
 
-We also wanted to examine the relationship between the predictors to determine if there is value in including interaction effects. To do so,
-we plot boxplots for 
+We also wanted to examine the relationship between the predictors to determine if there is value in including interaction effects. To do so, we plot boxplots to measure the relationship between a continuous and categorical variable (i.e. the relationship between Stokes Number and Reynolds/Froud Number) and a barplot to show the interaction between Reynold's Number and Froud Number
 
 ```{r echo = FALSE, warning = FALSE, message = FALSE, fig.height = 6, fig.width = 16}
 #predictor EDA
@@ -78,7 +93,7 @@ p2 <- ggplot(mapping = aes(x = as.factor(Fr), y = log(St)), data = train) +
 
 p3 <- ggplot(mapping = aes(x = as.factor(Re)), data = train) +
   geom_bar(aes(fill = as.factor(Fr))) +
-  labs(x = 'Fluid Turbulence', fill = 'Graviational Acceleration')
+  labs(x = 'Reynolds Number', fill = 'Froud Number')
 
 (p1 + p2) + plot_annotation(title = "Relationship between Predictor Variables", theme = theme(plot.title = element_text(hjust = 0.5)))
 
