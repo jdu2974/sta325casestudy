@@ -36,9 +36,9 @@ test$Re <- factor(test$Re)
 test$Fr <- factor(test$Fr)
 ```
 
-# Introduction 
+# Introduction
 
-Understanding fluid motion and turbulence is one of the most challenging problems that physicists face. This case study will examine the relationship between three key properties of particles (Reynolds Number, Stokes Number, and Froude Number) and the probability distribution of particle cluster volumes. Through exploratory data analysis and nonlinear regression models, we are able to make predictions about the distribution of particle cluster volumes given parameter settings in terms of their four moments as well as better understand the way in which each parameter affects distribution. 
+Understanding fluid motion and turbulence is one of the most challenging problems that physicists face. This case study will examine the relationship between three key properties of particles (Reynolds Number, Stokes Number, and Froude Number) and the probability distribution of particle cluster volumes. Through exploratory data analysis and nonlinear regression models, we are able to make predictions about the distribution of particle cluster volumes given parameter settings in terms of their four moments as well as better understand the way in which each parameter affects distribution.
 
 The dataset consists of 7 columns and 89 rows. Each row contains data from a simulation with different particle parameters. There are three predictor variables, or parameters:
 
@@ -100,20 +100,13 @@ p3 <- ggplot(mapping = aes(x = as.factor(Re)), data = train) +
 
 ```
 
-We notice potential relationships between all three combinations of predictor variables, with particular
-emphasis on the differences in range of log Stokes
-values based on different Reynolds and Froude numbers. We also notice
-that there are no particles with a Froude number of 0.3 and a Reynolds number of 398.
+We notice potential relationships between all three combinations of predictor variables, with particular emphasis on the differences in range of log Stokes values based on different Reynolds and Froude numbers. We also notice that there are no particles with a Froude number of 0.3 and a Reynolds number of 398.
 
 # Methodology
 
-To examine the relationship between a particle's fluid turbulence, gravitational acceleration, and density on the four moments, we fit four nonlinear regression models with each moment as the response. We considered
-a number of transformations on each moment, such as a Box-Cox transformation, but ultimately decided to log-transform each moment
-to have a clear interpretation of our subsequent regression coefficients.
-We also log-transformed each particle's Stokes number as this predictor was far from normally distributed as well.
+To examine the relationship between a particle's fluid turbulence, gravitational acceleration, and density on the four moments, we fit four nonlinear regression models with each moment as the response. We considered a number of transformations on each moment, such as a Box-Cox transformation, but ultimately decided to log-transform each moment to have a clear interpretation of our subsequent regression coefficients. We also log-transformed each particle's Stokes number as this predictor was far from normally distributed as well.
 
-Regarding our predictors, we first converted both the Reynolds number and the Froude number of each particle to categorical predictors because there only existed three unique values for each parameter in the dataset and because the numerical differences between such values of Reynolds and Froude numbers were not easily interpretable. We posited from our background research that fitting three interaction, effects for all three predictors would better model the relationship between such predictors. For example, it is well established in existing
-research that fluid particle acceleration (Fr) is innately related to the turbulence of a flow (Re), in line with the Kolmogorov microscales. Therefore, we included all three potential interactions in our model (Stokes number interactions are log-transformed).
+Regarding our predictors, we first converted both the Reynolds number and the Froude number of each particle to categorical predictors because there only existed three unique values for each parameter in the dataset and because the numerical differences between such values of Reynolds and Froude numbers were not easily interpretable. We posited from our background research that fitting three interaction, effects for all three predictors would better model the relationship between such predictors. For example, it is well established in existing research that fluid particle acceleration (Fr) is innately related to the turbulence of a flow (Re), in line with the Kolmogorov microscales. Therefore, we included all three potential interactions in our model (Stokes number interactions are log-transformed).
 
 We also considered adding higher order polynomials of the log of the Stokes number. We ran analysis of variance tests fitting models of varying degrees of log of the Stokes number and found that the quartic fit appeared to be reasonable for all moments. Therefore, our general model for each moment is as follows:
 
@@ -121,19 +114,13 @@ $$
 \begin{aligned} \quad Y &= \beta_0 + \beta_1log(Stokes) + \beta_2{log(Stokes)^2} + \beta_3{log(Stokes)^3} + \beta_4{log(Stokes)^4} + \beta_5Reynolds \\&\quad + \beta_6Froude + \beta_7(log(Stokes) * Froude) + \beta_8(log(Stokes) * Reynolds) + \beta_9(Froude * Reynolds)\end{aligned}
 $$
 
-Finally, we ran both stepwise forward and backward variable selections
-on each of our four models using AIC as our criteria. We personally
-care less about penalizing more complex models since we are given
-so few predictors to begin with. Forward and backward selection
-did not remove or add any variables to the second, third, and fourth
-moment models, but did remove the interaction term between the Reynolds
-number and the log of the Stokes number for the first moment model. However, we still decided to include this interaction because we believe
-it is scientifically grounded.
+Finally, we ran both stepwise forward and backward variable selections on each of our four models using AIC as our criteria. We personally care less about penalizing more complex models since we are given so few predictors to begin with. Forward and backward selection did not remove or add any variables to the second, third, and fourth moment models, but did remove the interaction term between the Reynolds number and the log of the Stokes number for the first moment model. However, we still decided to include this interaction because we believe it is scientifically grounded.
 
 # Results
 
 Here we display the results for our four regression models.
 
+````{=tex}
 \begin{multicols}{2}%
 
 
@@ -189,12 +176,9 @@ kbl(model_four_df, caption = 'Model 4') %>% kable_styling(latex_options = "HOLD_
 ```
 
 \end{multicols}
+````
 
-We performed model diagnostics for each model and determined that there were no substantial concerns on homoscedasticity and normality of residuals. We assume independence and linearity based on study design.
-
-The adjusted R-squared values for each model were .9991, .9814, .9765, and .9757 respectively, indicating that essentially all of the variation in the
-log of the four moments can be explained by the combination of the predictor variables that we chose. Using an alpha of .05 as a threshold for statistical significance, we find that every individual predictor is statistically significant in each of the four models, though both the sign and magnitudes of the coefficients vary by moment. We also notice that most of the interaction terms are also statistically significant, with the two
-clear exceptions being the interaction between a Froude number of 0.3 and log(Stokes) and the interaction between a Reynolds number of 224 and log(Stokes).
+We performed model diagnostics for each model and determined that there were no substantial concerns on homoscedasticity and normality of residuals. We assume independence and linearity based on study design. Model diagnostic plots are included in the appendix. The adjusted R-squared values for each model were .9991, .9814, .9765, and .9757 respectively, indicating that essentially all of the variation in the log of the four moments can be explained by the combination of the predictor variables that we chose. Using an alpha of .05 as a threshold for statistical significance, we find that every individual predictor is statistically significant in each of the four models, though both the sign and magnitudes of the coefficients vary by moment. We also notice that most of the interaction terms are also statistically significant, with the two clear exceptions being the interaction between a Froude number of 0.3 and log(Stokes) and the interaction between a Reynolds number of 224 and log(Stokes).
 
 Let's first interpret the individual regression coefficients, starting with Stokes number. Recall that a higher Stokes number represents a larger and denser particle. We modeled a non-linear relationship between the log of the Stokes number and the moments, and so an interpretation of, say, a .1 unit increase in the Stokes number holding the Reynolds and Froude numbers constant, is not so clear. However, we do notice that for the second, third, and fourth moment model, the degree one and three coefficients are positive, while the degree two and four coefficients are negative.
 
@@ -202,12 +186,11 @@ Next, we can examine the Reynolds number. Recall that high Reynolds numbers indi
 
 Finally, let's now examine the Froude number. Recall that high Froude numbers indicate that gravity can be neglected. The coefficients for the indicator variables of Froude are negative and essentially have the same magnitude for the two Froude values for all models, indicating that holding the size/density constant, a particle with Reynolds = 90 (baseline value) that experiences less influence from gravity (larger Froude values) is expected to have smaller moments than a particle that experiences influence from gravity.
 
-Let's now examine the interaction between a particle's size and its gravitational influence. We see that the interaction coefficient between log(Stokes) and Froude = 0.3 is positive for all four models, but that the coefficient between log(Stokes) and a Froude value of infinity is negative for the second, third, and fourth models. For particles that have such a high Froude value that they are in free fall, our model predicts that as they become larger and denser, holding turbulence constant, their second, third, and fourth moments are expected to become smaller. This is in contrast to particles that experience more gravitational influence (Froude  = 0.3), where the second, third, and fourth moments of the distribution are expected to become larger. However, this interaction was not significant.
+Let's now examine the interaction between a particle's size and its gravitational influence. We see that the interaction coefficient between log(Stokes) and Froude = 0.3 is positive for all four models, but that the coefficient between log(Stokes) and a Froude value of infinity is negative for the second, third, and fourth models. For particles that have such a high Froude value that they are in free fall, our model predicts that as they become larger and denser, holding turbulence constant, their second, third, and fourth moments are expected to become smaller. This is in contrast to particles that experience more gravitational influence (Froude = 0.3), where the second, third, and fourth moments of the distribution are expected to become larger. However, this interaction was not significant.
 
 We can also examine the interaction between a particle's size and its turbulence. We see that the interaction coefficient between log(Stokes) and Reynolds = 224 is only positive for the first moment model, but that the coefficient between log(Stokes) and Reynolds = 398 is negative for all the models (recall that the baseline value of Reynolds = 90). For particles that have such a high Reynolds value that they are extremely turbulent and unpredictable, our model predicts that as they become larger and denser, holding gravitational influence constant, their second, third, and fourth moments are expected to become smaller. This effect is less pronounced for less turbulent particles (Reynolds = 228); however, this interaction was not significant.
- 
-Finally, we can examine the interaction effects between a particle's turbulence and gravitational influence. We notice that all three interactions involving levels of the predictors are positive, but that the magnitude of the interaction term with high turbulence (Reynolds  = 398) and no gravitational influence (Froude is infinity) is larger than the interaction term with medium turbulence (Reynolds = 224) and no gravitational influence. This suggests that holding the size/density of the particle constant, particles with high turbulence and no gravitational influence are expected to have larger moments than particles with less turbulence.
 
+Finally, we can examine the interaction effects between a particle's turbulence and gravitational influence. We notice that all three interactions involving levels of the predictors are positive, but that the magnitude of the interaction term with high turbulence (Reynolds = 398) and no gravitational influence (Froude is infinity) is larger than the interaction term with medium turbulence (Reynolds = 224) and no gravitational influence. This suggests that holding the size/density of the particle constant, particles with high turbulence and no gravitational influence are expected to have larger moments than particles with less turbulence.
 
 ```{r test-values, echo = FALSE, warning = FALSE, message = FALSE}
 predictionone <- exp(predict(firstreg, newdata = test))
@@ -224,7 +207,28 @@ write.csv(test_predictions, "Test Predictions")
 
 Through our analysis, we were able to examine how specific characteristics of a particle, such as its size/density, turbulence, and gravitational acceleration, effects the distribution of cluster volumes in terms of its four moments. We were able to examine the individual effects of each parameter as well as the interactions between each parameter, culminating in four separate models that were able to explain essentially all of the variation in each moment. We hope that our models can be utilized to not only predict the moments of a particle's cluster distribution but also serve as statistical support for scientifically grounded claims regarding particle turbulence, though we would need to obtain more data points to have a stronger conviction in our results.
 
+# Appendix
 
+### First Moment Model Diagnostics
 
+```{r model-1-diagnostics, echo = FALSE, warning = FALSE, message = FALSE}
+plot(firstreg)
+```
 
+### Second Moment Model Diagnostics
 
+```{r model-2-diagnostics, echo = FALSE, warning = FALSE, message = FALSE}
+plot(secondreg)
+```
+
+### Third Moment Model Diagnostics
+
+```{r model-3-diagnostics, echo = FALSE, warning = FALSE, message = FALSE}
+plot(thirdreg)
+```
+
+### Fourth Moment Model Diagnostics
+
+```{r model-4-diagnostics, echo = FALSE, warning = FALSE, message = FALSE}
+plot(fourreg)
+```
